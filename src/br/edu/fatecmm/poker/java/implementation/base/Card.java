@@ -1,27 +1,29 @@
 package br.edu.fatecmm.poker.java.implementation.base;
 
-public enum Card {
-    TWO(2),
-    THREE(3),
-    FOUR(4),
-    FIVE(5),
-    SIX(6),
-    SEVEN(7),
-    EIGHT(8),
-    NINE(9),
-    TEN(10),
-    JACK(11),
-    QUEEN(12),
-    KING(13),
-    ACE(14);
+public final class Card {
+    private final Value value;
+    private final Suit suit;
 
-    private final int value;
-
-    Card(int value) {
+    public Card(Value value, Suit suit) {
         this.value = value;
+        this.suit = suit;
     }
 
-    public int getValue() {
+    public Value getValue() {
         return value;
     }
+
+    public Suit getSuit() {
+        return suit;
+    }
+
+    @Override
+    public String toString() {
+        return "Card{" +
+                "value=" + value +
+                ", suit=" + suit +
+                '}';
+    }
 }
+
+
