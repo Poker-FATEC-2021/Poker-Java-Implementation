@@ -2,9 +2,9 @@ package br.edu.fatecmm.poker.java.implementation.board;
 
 import br.edu.fatecmm.poker.java.implementation.board.common.CountedCards;
 
-public class FourOfAKind extends CountedCards {
+public class OnePair extends CountedCards {
     @Override
     public int isCount() {
-        return 4;
+        return 2;
     }
 }

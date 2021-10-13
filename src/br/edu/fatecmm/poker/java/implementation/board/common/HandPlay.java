@@ -1,4 +1,4 @@
-package br.edu.fatecmm.poker.java.implementation.board;
+package br.edu.fatecmm.poker.java.implementation.board.common;
 
 import br.edu.fatecmm.poker.java.implementation.base.Card;
 
