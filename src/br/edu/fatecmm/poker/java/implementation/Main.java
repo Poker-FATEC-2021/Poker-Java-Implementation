@@ -1,5 +1,6 @@
 package br.edu.fatecmm.poker.java.implementation;
 
+import br.edu.fatecmm.poker.java.implementation.base.Board;
 import br.edu.fatecmm.poker.java.implementation.base.Card;
 import br.edu.fatecmm.poker.java.implementation.base.Suit;
 import br.edu.fatecmm.poker.java.implementation.base.Value;
@@ -12,7 +13,7 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) {
-        test();
+        new Board().start();
     }
 
     public static void test() {
