@@ -61,9 +61,9 @@ public class Board {
         int realPlayers = Integer.parseInt(s.nextLine());
 
         System.out.println("Insira o número de jogadores mecanizados: ");
-        int mecanicalPlayers = Integer.parseInt(s.nextLine());
+        int mechanicalPlayers = Integer.parseInt(s.nextLine());
 
-        class QuantityGenerator {
+        final class QuantityGenerator {
             private final int quantity;
             private final Supplier<Player> supplier;
 
@@ -78,7 +78,7 @@ public class Board {
         };
 
         fn.accept(new QuantityGenerator(realPlayers, RealPlayer::new), players::add);
-        fn.accept(new QuantityGenerator(mecanicalPlayers, CPUPlayer::new), players::add);
+        fn.accept(new QuantityGenerator(mechanicalPlayers, CPUPlayer::new), players::add);
 
         for (Player player : players) {
             Consumer<Card> c = player.getCards()::add;
