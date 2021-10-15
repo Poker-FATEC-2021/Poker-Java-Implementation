@@ -8,20 +8,28 @@ import java.util.function.Supplier;
 
 public class Board {
     private final List<Player> players;
-    private final Deque<Card> faceDown;
-    private final Deque<Card> faceUp;
+    private final List<Card> faceDown;
+    private final List<Card> faceUp;
+    private final List<Integer> removedPlayers;
+
     private int round = 0;
     private int dealer = 0;
+    private int money = 0;
 
-
-    public Board(List<Player> players, Deque<Card> faceDown, Deque<Card> faceUp) {
+    public Board(List<Player> players, List<Card> faceDown, List<Card> faceUp, List<Integer> removedPlayers) {
         this.players = players;
         this.faceDown = faceDown;
         this.faceUp = faceUp;
+        this.removedPlayers = removedPlayers;
     }
 
     public Board() {
-        this(new ArrayList<>(), new ArrayDeque<>(), new ArrayDeque<>());
+        this(
+                new ArrayList<>(8),
+                new ArrayList<>(64),
+                new ArrayList<>(),
+                new ArrayList<>()
+        );
     }
 
     public void start() {
@@ -29,29 +37,63 @@ public class Board {
         initializePlayers();
         initializeDealer();
 
-        int playersCount = players.size();
-
         while (true) {
-            System.out.println("Round: " + ++round);
+            System.out.println("Round: " + round + 1);
             System.out.println("Dealer: " + dealer);
 
-            for (int i = ((dealer + 1) % playersCount); ; i = ((i + 1) % playersCount)) {
-                players.get(i).play(null);
-                if (i == dealer) break;
+            Turn turn = Turn.values()[round];
+
+            switch (turn) {
+                case PRE_FLOP:
+                    initializePlayersCards();
+                    break;
+                case FLOP:
+                    initializeFlopCards();
+                    break;
+                case TURN:
+                case RIVER:
+                    faceUpCard();
+                    break;
             }
 
+            int playersCount = players.size();
+
+            players: for (int i = ((dealer + 1) % playersCount); ; i = ((i + 1) % playersCount)) {
+                System.out.println("Player " + i + 1);
+
+                PlayAction action = players
+                        .get(i)
+                        .play(faceUp, generatePlayerState(turn, dealer, i));
+
+                switch (action.getKind()) {
+                    case RUN:
+                        removedPlayers.add(i);
+                        break;
+                    case PAY:
+                        break;
+                    case RAISE:
+                    case ALL_IN:
+                        money += action.getMoney();
+                        break;
+                    case CHECK: break players;
+                }
+            }
+            for (Integer removed : removedPlayers) players.remove((int) removed);
+            removedPlayers.clear();
+
             dealer = ((dealer + 1) % playersCount);
+            round++;
+
+            if (turn == Turn.RIVER) break;
         }
     }
 
     private void initializeCards() {
-        List<Card> cards = new ArrayList<>(64);
         for (Value value : Value.values())
             for (Suit suit : Suit.values())
-                cards.add(new Card(value, suit));
+                faceDown.add(new Card(value, suit));
 
-        Collections.shuffle(cards, new SecureRandom());
-        cards.forEach(faceDown::addLast);
+        Collections.shuffle(faceDown, new SecureRandom());
     }
 
     private void initializePlayers() {
@@ -79,12 +121,31 @@ public class Board {
 
         fn.accept(new QuantityGenerator(realPlayers, RealPlayer::new), players::add);
         fn.accept(new QuantityGenerator(mechanicalPlayers, CPUPlayer::new), players::add);
+    }
 
+    private void initializePlayersCards() {
         for (Player player : players) {
             Consumer<Card> c = player.getCards()::add;
-            c.accept(faceDown.pollLast());
-            c.accept(faceDown.pollLast());
+            c.accept(faceDown.remove(faceDown.size() - 1));
+            c.accept(faceDown.remove(faceDown.size() - 1));
         }
+    }
+
+    private void initializeFlopCards() {
+        Runnable r = () -> faceUp.add(faceDown.remove(faceDown.size() - 1));
+        r.run();
+        r.run();
+        r.run();
+    }
+
+    private void faceUpCard() {
+        faceUp.add(faceDown.remove(faceDown.size() - 1));
+    }
+
+    private PlayerState generatePlayerState(Turn turn, int dealer, int player) {
+        boolean isNextDealer = dealer + 1 == player || dealer + 2 == player;
+        if (turn == Turn.PRE_FLOP && isNextDealer) return PlayerState.BLIND;
+        return PlayerState.NORMAL;
     }
 
     private void initializeDealer() {
