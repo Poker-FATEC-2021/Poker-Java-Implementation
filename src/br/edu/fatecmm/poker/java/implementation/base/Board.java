@@ -2,32 +2,31 @@ package br.edu.fatecmm.poker.java.implementation.base;
 
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 public class Board {
     private final List<Player> players;
     private final List<Card> faceDown;
     private final List<Card> faceUp;
-    private final List<Integer> removedPlayers;
 
     private int round = 0;
     private int dealer = 0;
     private int money = 0;
+    private int biggerBet = 0;
+    private int biggerBetOwner = 0;
+    private int boardRotate = 0;
 
-    public Board(List<Player> players, List<Card> faceDown, List<Card> faceUp, List<Integer> removedPlayers) {
+    public Board(List<Player> players, List<Card> faceDown, List<Card> faceUp) {
         this.players = players;
         this.faceDown = faceDown;
         this.faceUp = faceUp;
-        this.removedPlayers = removedPlayers;
     }
 
     public Board() {
         this(
                 new ArrayList<>(8),
                 new ArrayList<>(64),
-                new ArrayList<>(),
                 new ArrayList<>()
         );
     }
@@ -38,8 +37,8 @@ public class Board {
         initializeDealer();
 
         while (true) {
-            System.out.println("Round: " + round + 1);
-            System.out.println("Dealer: " + dealer);
+            System.out.println("Round: " + (round + 1));
+            System.out.println("Dealer: " + (dealer + 1));
 
             Turn turn = Turn.values()[round];
 
@@ -56,35 +55,40 @@ public class Board {
                     break;
             }
 
-            int playersCount = players.size();
-
-            players: for (int i = ((dealer + 1) % playersCount); ; i = ((i + 1) % playersCount)) {
-                System.out.println("Player " + i + 1);
+            players: for (int i = ((dealer + 1) % players.size()); ; i = ((i + 1) % players.size())) {
+                if (i == dealer) boardRotate++;
+                System.out.println("-----------------------------------------------------------");
 
                 PlayAction action = players
                         .get(i)
-                        .play(faceUp, generatePlayerState(turn, dealer, i));
+                        .play(
+                                faceUp,
+                                getPlayerState(turn, dealer, i, players.size(), boardRotate),
+                                biggerBet
+                        );
 
                 switch (action.getKind()) {
-                    case RUN:
-                        removedPlayers.add(i);
-                        break;
+                    case RUN: {
+                        players.remove(i);
+                        boardRotate = 0;
+                        break players;
+                    }
                     case PAY:
-                        break;
                     case RAISE:
                     case ALL_IN:
                         money += action.getMoney();
+                        biggerBet = action.getBiggerBet();
                         break;
-                    case CHECK: break players;
+                    case CHECK: {
+                        boardRotate = 0;
+                        break players;
+                    }
                 }
+                System.out.println("-----------------------------------------------------------\n\n\n");
             }
-            for (Integer removed : removedPlayers) players.remove((int) removed);
-            removedPlayers.clear();
 
-            dealer = ((dealer + 1) % playersCount);
+            dealer = ((dealer + 1) % players.size());
             round++;
-
-            if (turn == Turn.RIVER) break;
         }
     }
 
@@ -100,27 +104,32 @@ public class Board {
         Scanner s = new Scanner(System.in);
 
         System.out.println("Insira o número de jogadores reais: ");
-        int realPlayers = Integer.parseInt(s.nextLine());
+        int realPlayersQuantity = Integer.parseInt(s.nextLine());
 
         System.out.println("Insira o número de jogadores mecanizados: ");
-        int mechanicalPlayers = Integer.parseInt(s.nextLine());
+        int mechanicalPlayersQuantity = Integer.parseInt(s.nextLine());
 
         final class QuantityGenerator {
             private final int quantity;
-            private final Supplier<Player> supplier;
+            private final Function<Integer, Player> fn;
 
-            public QuantityGenerator(int quantity, Supplier<Player> supplier) {
+            public QuantityGenerator(int quantity, Function<Integer, Player> fn) {
                 this.quantity = quantity;
-                this.supplier = supplier;
+                this.fn = fn;
             }
         }
 
-        BiConsumer<QuantityGenerator, Consumer<Player>> fn = (g, c) -> {
-            for (int i = 0; i < g.quantity; i++) c.accept(g.supplier.get());
-        };
+        List<QuantityGenerator> generators = Arrays.asList(
+                new QuantityGenerator(realPlayersQuantity, RealPlayer::new),
+                new QuantityGenerator(mechanicalPlayersQuantity, CPUPlayer::new)
+        );
 
-        fn.accept(new QuantityGenerator(realPlayers, RealPlayer::new), players::add);
-        fn.accept(new QuantityGenerator(mechanicalPlayers, CPUPlayer::new), players::add);
+        int id = 0;
+        for (QuantityGenerator generator : generators) {
+            for (int i = 0; i < generator.quantity; i++, id++) {
+                players.add(generator.fn.apply(id));
+            }
+        }
     }
 
     private void initializePlayersCards() {
@@ -142,9 +151,17 @@ public class Board {
         faceUp.add(faceDown.remove(faceDown.size() - 1));
     }
 
-    private PlayerState generatePlayerState(Turn turn, int dealer, int player) {
-        boolean isNextDealer = dealer + 1 == player || dealer + 2 == player;
-        if (turn == Turn.PRE_FLOP && isNextDealer) return PlayerState.BLIND;
+    private PlayerState getPlayerState(
+            Turn turn,
+            int dealer,
+            int player,
+            int playersCount,
+            int boardRotate
+    ) {
+        if (turn == Turn.PRE_FLOP && boardRotate <= 0) {
+            if ((dealer + 1) % playersCount == player) return PlayerState.SMALL_BLIND;
+            if ((dealer + 2) % playersCount == player) return PlayerState.BIG_BLIND;
+        }
         return PlayerState.NORMAL;
     }
 
