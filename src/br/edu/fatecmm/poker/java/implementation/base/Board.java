@@ -1,5 +1,7 @@
 package br.edu.fatecmm.poker.java.implementation.base;
 
+import br.edu.fatecmm.poker.java.implementation.board.HandPlayWeight;
+
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.function.Consumer;
@@ -56,6 +58,46 @@ public class Board {
                 case COMPARE: {
                     System.out.println("O jogo acabou!");
                     System.out.println("As cartas vão ser comparadas!");
+
+                    Map<Integer, List<Player>> pointPlayers = new HashMap<>();
+
+                    HandPlayWeight[] handPlayWeights = HandPlayWeight.values();
+
+                    players: for (Player player : players) {
+                        List<Card> cards = new ArrayList<>(8);
+                        cards.addAll(player.getCards());
+                        cards.addAll(faceUp);
+
+                        for (HandPlayWeight handPlayWeight : handPlayWeights) {
+                            if (handPlayWeight.getHandPlay().isHandPlay(cards)) {
+                                int weight = handPlayWeight.getWeight();
+                                if (!pointPlayers.containsKey(weight)) {
+                                    pointPlayers.put(weight, new ArrayList<>());
+                                }
+                                pointPlayers.get(weight).add(player);
+                                continue players;
+                            }
+                        }
+                        if (!pointPlayers.containsKey(-1)) {
+                            pointPlayers.put(-1, new ArrayList<>());
+                        }
+                        pointPlayers.get(-1).add(player);
+                    }
+
+                    int biggerWeight = pointPlayers
+                            .keySet()
+                            .stream()
+                            .max(Comparator.comparingInt(a -> a))
+                            .orElse(-1);
+
+                    List<Player> winners = pointPlayers.get(biggerWeight);
+                    if (winners.size() > 1) {
+                        System.out.println("Tivemos mais de um ganhador!!!");
+                    } else {
+                        System.out.println("Tivemos apenas um ganhador!!!");
+                        Player winner = players.get(0);
+                        System.out.println(winner.getId() + " foi o vencedor! Parabens!!!");
+                    }
 
                     System.exit(0);
                 }

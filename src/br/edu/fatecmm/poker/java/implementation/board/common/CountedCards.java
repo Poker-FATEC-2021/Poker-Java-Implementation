@@ -9,9 +9,11 @@ public abstract class CountedCards extends OrganizedCards {
     @Override
     public boolean isHandPlay(Map<Integer, List<Card>> map) {
         int count = getCount();
-        for (List<Card> cards : map.values())
-            if (cards.size() == count) return true;
-        return false;
+        return map
+                .values()
+                .stream()
+                .map(List::size)
+                .anyMatch(v -> v == count);
     }
 
     public abstract int getCount();
