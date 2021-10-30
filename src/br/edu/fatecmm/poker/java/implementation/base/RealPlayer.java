@@ -17,10 +17,7 @@ public class RealPlayer extends Player {
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("----");
-        System.out.println("Board cards: " + cards);
         System.out.println("Player state: " + playerState);
-        System.out.println("Bigger bet: " + biggerBet);
-        System.out.println("----");
         System.out.println(this);
         System.out.println("----");
 

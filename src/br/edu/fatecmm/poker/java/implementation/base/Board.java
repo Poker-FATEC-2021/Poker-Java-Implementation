@@ -14,7 +14,7 @@ public class Board {
     private int dealer = 0;
     private int money = 0;
     private int biggerBet = 0;
-    private int biggerBetOwner = 0;
+    private int biggerBetOwnerPosition = -1;
     private int boardRotate = 0;
 
     public Board(List<Player> players, List<Card> faceDown, List<Card> faceUp) {
@@ -37,10 +37,10 @@ public class Board {
         initializeDealer();
 
         while (true) {
-            System.out.println("Round: " + (round + 1));
-            System.out.println("Dealer: " + (dealer + 1));
-
             Turn turn = Turn.values()[round];
+
+            System.out.println("Turn: " + turn);
+            System.out.println("Dealer: " + (dealer + 1));
 
             switch (turn) {
                 case PRE_FLOP:
@@ -58,6 +58,11 @@ public class Board {
             players: for (int i = ((dealer + 1) % players.size()); ; i = ((i + 1) % players.size())) {
                 if (i == dealer) boardRotate++;
                 System.out.println("-----------------------------------------------------------");
+                System.out.println("Players count: " + players.size());
+                System.out.println("Board money: " + money);
+                System.out.println("Board cards: " + faceUp);
+                System.out.println("Bigger bet: " + biggerBet);
+                System.out.println("Bigger bet owner position: " + biggerBetOwnerPosition);
 
                 PlayAction action = players
                         .get(i)
@@ -69,16 +74,27 @@ public class Board {
 
                 switch (action.getKind()) {
                     case RUN: {
-                        players.remove(i);
-                        boardRotate = 0;
-                        break players;
+                        if ((i+1) % players.size() == biggerBetOwnerPosition) {
+                            players.remove(i);
+                            boardRotate = 0;
+                            break players;
+                        } else {
+                            Player player = players.get(biggerBetOwnerPosition);
+                            players.remove(i);
+                            biggerBetOwnerPosition = players.indexOf(player);
+                        }
                     }
                     case PAY:
                     case RAISE:
-                    case ALL_IN:
+                    case ALL_IN: {
+                        int oldBiggerBet = biggerBet;
                         money += action.getMoney();
                         biggerBet = action.getBiggerBet();
+                        if (biggerBet > oldBiggerBet) {
+                            biggerBetOwnerPosition = i;
+                        }
                         break;
+                    }
                     case CHECK: {
                         boardRotate = 0;
                         break players;
