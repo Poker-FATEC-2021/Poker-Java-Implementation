@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 public class StraightFlush extends SequenceCards {
     @Override
-    public boolean isSequence(Boolean isSequence, List<Card> cards) {
+    public boolean handleSequence(Boolean isSequence, List<Card> cards) {
         return isSequence && cards
                 .stream()
                 .collect(

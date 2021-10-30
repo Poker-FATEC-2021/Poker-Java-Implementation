@@ -18,10 +18,10 @@ public abstract class SequenceCards implements HandPlay {
                 weight = tempWeight;
                 continue;
             }
-            return isSequence(false, cards);
+            return handleSequence(false, cards);
         }
-        return isSequence(true, cards);
+        return handleSequence(true, cards);
     }
 
-    public abstract boolean isSequence(Boolean isSequence, List<Card> cards);
+    public abstract boolean handleSequence(Boolean isSequence, List<Card> cards);
 }

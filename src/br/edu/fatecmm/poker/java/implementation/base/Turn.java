@@ -4,5 +4,6 @@ public enum Turn {
     PRE_FLOP,
     FLOP,
     TURN,
-    RIVER
+    RIVER,
+    COMPARE
 }

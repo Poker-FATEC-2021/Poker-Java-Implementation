@@ -53,6 +53,12 @@ public class Board {
                 case RIVER:
                     faceUpCard();
                     break;
+                case COMPARE: {
+                    System.out.println("O jogo acabou!");
+                    System.out.println("As cartas vão ser comparadas!");
+
+                    System.exit(0);
+                }
             }
 
             players: for (int i = ((dealer + 1) % players.size()); ; i = ((i + 1) % players.size())) {

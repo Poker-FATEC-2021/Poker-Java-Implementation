@@ -4,7 +4,7 @@ import br.edu.fatecmm.poker.java.implementation.board.common.CountedCards;
 
 public class FourOfAKind extends CountedCards {
     @Override
-    public int isCount() {
+    public int getCount() {
         return 4;
     }
 }
