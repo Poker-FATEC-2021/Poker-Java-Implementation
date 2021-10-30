@@ -42,7 +42,7 @@ public class Board {
             Turn turn = Turn.values()[round];
 
             System.out.println("Turn: " + turn);
-            System.out.println("Dealer: " + (dealer + 1));
+            System.out.println("Dealer: " + dealer);
 
             switch (turn) {
                 case PRE_FLOP:
@@ -91,12 +91,21 @@ public class Board {
                             .orElse(-1);
 
                     List<Player> winners = pointPlayers.get(biggerWeight);
+
+                    System.out.println("Cartas da mesa: ");
+                    System.out.println(faceUp);
+                    System.out.println("Tipo de jogada: " + biggerWeight);
+
                     if (winners.size() > 1) {
-                        System.out.println("Tivemos mais de um ganhador!!!");
+                        System.out.println("Tivemos mais de um ganhador, o 'pote' será dividido!!!");
+                        System.out.println("Os ganhadores foram: ");
+                        winners.forEach(System.out::println);
+                        float total = (float) money / winners.size();
+                        System.out.printf("Cada ganhador receberá %.2f", total);
                     } else {
                         System.out.println("Tivemos apenas um ganhador!!!");
                         Player winner = players.get(0);
-                        System.out.println(winner.getId() + " foi o vencedor! Parabens!!!");
+                        System.out.println(winner);
                     }
 
                     System.exit(0);
@@ -125,12 +134,16 @@ public class Board {
                         if ((i+1) % players.size() == biggerBetOwnerPosition) {
                             players.remove(i);
                             boardRotate = 0;
+                            biggerBetOwnerPosition = -1;
                             break players;
-                        } else {
+                        } else if (biggerBetOwnerPosition > 0) {
                             Player player = players.get(biggerBetOwnerPosition);
                             players.remove(i);
                             biggerBetOwnerPosition = players.indexOf(player);
+                        } else {
+                            players.remove(i);
                         }
+                        break;
                     }
                     case PAY:
                     case RAISE:
@@ -140,13 +153,20 @@ public class Board {
                         biggerBet = action.getBiggerBet();
                         if (biggerBet > oldBiggerBet) {
                             biggerBetOwnerPosition = i;
+                        } else if ((i + 1) % players.size() == biggerBetOwnerPosition) {
+                            boardRotate = 0;
+                            biggerBetOwnerPosition = -1;
+                            break players;
                         }
                         break;
                     }
                     case CHECK: {
-                        boardRotate = 0;
-                        break players;
-                    }
+                        if (((i + 1) % players.size() == biggerBetOwnerPosition) || (biggerBetOwnerPosition == -1 && boardRotate == 1)) {
+                            boardRotate = 0;
+                            biggerBetOwnerPosition = -1;
+                            break players;
+                        }
+                     }
                 }
                 System.out.println("-----------------------------------------------------------\n\n\n");
             }
@@ -170,8 +190,8 @@ public class Board {
         System.out.println("Insira o número de jogadores reais: ");
         int realPlayersQuantity = Integer.parseInt(s.nextLine());
 
-        System.out.println("Insira o número de jogadores mecanizados: ");
-        int mechanicalPlayersQuantity = Integer.parseInt(s.nextLine());
+//        System.out.println("Insira o número de jogadores mecanizados: ");
+//        int mechanicalPlayersQuantity = Integer.parseInt(s.nextLine());
 
         final class QuantityGenerator {
             private final int quantity;
@@ -184,8 +204,8 @@ public class Board {
         }
 
         List<QuantityGenerator> generators = Arrays.asList(
-                new QuantityGenerator(realPlayersQuantity, RealPlayer::new),
-                new QuantityGenerator(mechanicalPlayersQuantity, CPUPlayer::new)
+                new QuantityGenerator(realPlayersQuantity, RealPlayer::new)
+                //new QuantityGenerator(mechanicalPlayersQuantity, CPUPlayer::new)
         );
 
         int id = 0;
